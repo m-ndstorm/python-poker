@@ -11,8 +11,10 @@ class Suit(object):
 
 class Card(object):
     numbers = [str(n) for n in range(2,11)]+['J','Q','K','A']
+    suits = [Suit('♠','spade'), Suit('♥','heart'), Suit('♦','diamond'), Suit('♣','club')]
     values = {name:index for index,name in enumerate(numbers)}
     map_to_values = lambda ci: Card.values[ci.number]
+    map_to_suits = lambda ci: {s:i for i,s in enumerate(Card.suits)}[ci.suit]
 
     def __init__(self, number, suit):
         self.number = number
@@ -24,12 +26,7 @@ class Card(object):
 
 class Deck(object):
     def __init__(self):
-        self.suits = [
-            Suit('♠','spade'),
-            Suit('♥','heart'),
-            Suit('♦','diamond'),
-            Suit('♣','club')]
-        card_tuples = list(product(Card.numbers, self.suits))
+        card_tuples = list(product(Card.numbers, Card.suits))
         self.cards = [Card(n,s) for n,s in card_tuples]
 
     def shuffle(self):
@@ -70,6 +67,12 @@ def get_matches(hand, table):
             print(f"\tTHREE OF A KIND: {card_str(group)}")
         elif len(group) == 4:
             print(f"\tFOUR OF A KIND: {card_str(group)}")
+
+    #Find flushes through grouping by suit
+    for key, group in groupby(merged, Card.map_to_suits):
+        group = list(group)
+        if len(group) >= 5:
+            print(f"\tFLUSH: {card_str(group)}")
 
     n_card_windows = lambda data, n=5: [data[i:i+n] for i,_ in enumerate(data[:-n+1])]
 
