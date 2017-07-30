@@ -1,4 +1,4 @@
-from itertools import product
+from itertools import product, groupby
 from random import shuffle
 
 class Suit(object):
@@ -10,6 +10,10 @@ class Suit(object):
         return self.display
 
 class Card(object):
+    numbers = [str(n) for n in range(2,11)]+['J','Q','K','A']
+    values = {name:index for index,name in enumerate(numbers)}
+    map_to_values = lambda ci: Card.values[ci.number]
+
     def __init__(self, number, suit):
         self.number = number
         self.suit = suit
@@ -25,8 +29,7 @@ class Deck(object):
             Suit('♥','heart'),
             Suit('♦','diamond'),
             Suit('♣','club')]
-        self.numbers = [str(n) for n in range(2,10)]+['J','Q','K','A']
-        card_tuples = list(product(self.numbers, self.suits))
+        card_tuples = list(product(Card.numbers, self.suits))
         self.cards = [Card(n,s) for n,s in card_tuples]
 
     def shuffle(self):
@@ -42,8 +45,41 @@ class Deck(object):
 def main():
     deck = Deck()
     deck.shuffle()
-    hand = deck.draw_cards(2)
-    [print(c) for c in hand]
+    hands = [deck.draw_cards(2) for _ in range(4)]
+    table = deck.draw_cards(5)
+    print("TABLE:\t"+" ".join(card_list(sorted(table, key=Card.map_to_values))))
+    [get_matches(hand, table) for hand in hands]
+
+def card_list(cards):
+    return [card.display for card in cards]
+def card_str(cards):
+    return " ".join(card_list(cards))
+
+def get_matches(hand, table):
+    print(f" > {card_str(hand)}:")
+
+    #Merge table and hand together + sort by value
+    merged = sorted(hand + table, key=Card.map_to_values)
+
+    #Find pairs through grouping by number
+    for key, group in groupby(merged, Card.map_to_values):
+        group = list(group)
+        if len(group) == 2:
+            print(f"\tPAIR: {card_str(group)}")
+        elif len(group) == 3:
+            print(f"\tTHREE OF A KIND: {card_str(group)}")
+        elif len(group) == 4:
+            print(f"\tFOUR OF A KIND: {card_str(group)}")
+
+    n_card_windows = lambda data, n=5: [data[i:i+n] for i,_ in enumerate(data[:-n+1])]
+
+    #Find straights by iterating through windows of n cards
+    possible_straights = n_card_windows(Card.numbers)
+    current_sequences = n_card_windows(merged)
+    for s in current_sequences:
+        if [c.number for c in s] in possible_straights:
+            print(f"\tSTRAIGHT: {card_str(s)}")
+
 
 if __name__ == "__main__":
     main()
