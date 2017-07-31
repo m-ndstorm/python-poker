@@ -14,6 +14,7 @@ class Card(object):
     suits = [Suit('♠','spade'), Suit('♥','heart'), Suit('♦','diamond'), Suit('♣','club')]
     values = {name:index for index,name in enumerate(numbers)}
     map_to_values = lambda ci: Card.values[ci.number]
+    map_to_al_values = lambda ci: dict(Card.values, **{'A':-1})[ci.number]
     map_to_suits = lambda ci: {s:i for i,s in enumerate(Card.suits)}[ci.suit]
 
     def __init__(self, number, suit):
@@ -57,6 +58,7 @@ def get_matches(hand, table):
 
     #Merge table and hand together + sort by value
     merged = sorted(hand + table, key=Card.map_to_values)
+    merged_aces_low = sorted(merged, key=Card.map_to_al_values)
 
     #Find pairs through grouping by number
     for key, group in groupby(merged, Card.map_to_values):
@@ -77,8 +79,9 @@ def get_matches(hand, table):
     n_card_windows = lambda data, n=5: [data[i:i+n] for i,_ in enumerate(data[:-n+1])]
 
     #Find straights by iterating through windows of n cards
-    possible_straights = n_card_windows(Card.numbers)
+    possible_straights = n_card_windows(['A']+Card.numbers)
     current_sequences = n_card_windows(merged)
+    current_sequences += n_card_windows(merged_aces_low)
     for s in current_sequences:
         if [c.number for c in s] in possible_straights:
             print(f"\tSTRAIGHT: {card_str(s)}")
